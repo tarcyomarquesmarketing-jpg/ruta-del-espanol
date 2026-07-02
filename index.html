@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Ruta del Español — Do Básico ao Avançado</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#1B1035; --card:#2A1B4E; --card2:#352363;
+  --coral:#FF5D73; --yellow:#FFC53D; --teal:#2EE6A8; --lilac:#9D8CFF;
+  --text:#F6F1FF; --muted:#B4A8D9;
+  --radius:20px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;overflow-x:hidden}
+#app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative}
+h1,h2,h3{font-family:'Baloo 2',cursive}
+button{font-family:inherit;border:none;cursor:pointer}
+button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+
+.hud{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;position:sticky;top:0;background:linear-gradient(var(--bg) 75%,transparent);z-index:10}
+.hud .stat{display:flex;align-items:center;gap:5px;font-weight:800;font-size:15px}
+.hud .xp{color:var(--yellow)} .hud .streak{color:var(--coral)} .hud .hearts{color:var(--coral)}
+
+.map-header{padding:6px 22px 14px}
+.map-header h1{font-size:26px;line-height:1.1}
+.map-header p{color:var(--muted);font-size:14px;margin-top:4px}
+.level-tag{display:inline-block;background:var(--card);color:var(--yellow);font-weight:800;font-size:12px;padding:5px 12px;border-radius:99px;margin-top:8px}
+
+.tier{position:relative;z-index:1;margin:26px 22px 14px;display:flex;align-items:center;gap:10px}
+.tier .line{flex:1;height:3px;border-radius:99px}
+.tier h2{font-size:16px;letter-spacing:.06em;text-transform:uppercase}
+.tier .sub{font-size:11px;color:var(--muted);font-weight:700}
+.tier.t0 h2{color:var(--teal)} .tier.t0 .line{background:var(--teal)}
+.tier.t1 h2{color:var(--yellow)} .tier.t1 .line{background:var(--yellow)}
+.tier.t2 h2{color:var(--coral)} .tier.t2 .line{background:var(--coral)}
+
+.trail{position:relative;padding:0 0 90px}
+.node{position:relative;z-index:1;display:flex;align-items:center;gap:14px;padding:10px 26px;margin-bottom:22px}
+.node.alt{flex-direction:row-reverse;text-align:right}
+.node-btn{width:76px;height:76px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:32px;background:var(--card2);border:4px solid var(--lilac);box-shadow:0 6px 0 rgba(0,0,0,.35);transition:transform .15s}
+.node-btn:active{transform:scale(.93)}
+.node.done .node-btn{background:var(--teal);border-color:#1fbf88}
+.node.current .node-btn{background:var(--coral);border-color:#d13a52;animation:pulse 1.6s infinite}
+.node.locked .node-btn{filter:grayscale(1);opacity:.45}
+@keyframes pulse{0%,100%{box-shadow:0 6px 0 rgba(0,0,0,.35),0 0 0 0 rgba(255,93,115,.5)}50%{box-shadow:0 6px 0 rgba(0,0,0,.35),0 0 0 14px rgba(255,93,115,0)}}
+.node-info h3{font-size:17px}
+.node-info .city{color:var(--yellow);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.node-info .desc{color:var(--muted);font-size:13px}
+.node-info .stars{font-size:13px;color:var(--yellow)}
+
+.lesson{display:flex;flex-direction:column;flex:1;padding:0 18px 24px}
+.progressbar{height:14px;background:var(--card);border-radius:99px;margin:4px 0 6px;overflow:hidden}
+.progressbar>div{height:100%;background:linear-gradient(90deg,var(--teal),var(--yellow));border-radius:99px;transition:width .4s;width:0}
+.combo{font-size:12px;font-weight:800;color:var(--yellow);height:18px;text-align:right}
+.q-card{background:var(--card);border-radius:var(--radius);padding:22px 18px;margin-top:8px}
+.q-type{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--lilac);margin-bottom:8px}
+.q-prompt{font-size:21px;font-family:'Baloo 2';line-height:1.25}
+.q-hint{color:var(--muted);font-size:13px;margin-top:6px}
+.audio-btn{margin-top:14px;background:var(--lilac);color:#1B1035;font-size:26px;width:72px;height:72px;border-radius:22px;box-shadow:0 5px 0 #6f5fd6}
+.audio-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #6f5fd6}
+.options{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+.opt{background:var(--card2);color:var(--text);font-size:16px;font-weight:700;padding:14px;border-radius:16px;border:3px solid transparent;text-align:left;transition:all .12s}
+.opt:active{transform:scale(.98)}
+.opt.correct{background:#144d3a;border-color:var(--teal)}
+.opt.wrong{background:#4d1420;border-color:var(--coral)}
+.pairs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.pair-btn{background:var(--card2);color:var(--text);font-weight:700;font-size:15px;padding:15px 6px;border-radius:16px;border:3px solid transparent}
+.pair-btn.sel{border-color:var(--yellow)}
+.pair-btn.matched{background:#144d3a;border-color:var(--teal);opacity:.6;pointer-events:none}
+.pair-btn.shake{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.type-input{width:100%;margin-top:18px;padding:16px;border-radius:16px;border:3px solid var(--card2);background:var(--card2);color:var(--text);font-size:18px;font-family:inherit;font-weight:700}
+.type-input:focus{outline:none;border-color:var(--lilac)}
+.feedback{margin-top:14px;padding:14px;border-radius:14px;font-weight:800;display:none}
+.feedback.ok{display:block;background:#144d3a;color:var(--teal)}
+.feedback.err{display:block;background:#4d1420;color:#ff9daa}
+.cta{margin-top:auto;padding-top:18px}
+.btn-main{width:100%;background:var(--coral);color:#fff;font-size:18px;font-weight:800;font-family:'Baloo 2';padding:16px;border-radius:18px;box-shadow:0 5px 0 #c93b52}
+.btn-main:active{transform:translateY(3px);box-shadow:0 2px 0 #c93b52}
+.btn-main:disabled{opacity:.4;box-shadow:none}
+.btn-ghost{width:100%;background:transparent;color:var(--muted);font-weight:800;padding:12px;margin-top:6px;font-size:14px}
+
+.result{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
+.result .big{font-size:66px}
+.result h2{font-size:28px;margin:8px 0 4px}
+.result p{color:var(--muted)}
+.badges{display:flex;gap:12px;margin:20px 0;flex-wrap:wrap;justify-content:center}
+.badge{background:var(--card);padding:12px 16px;border-radius:16px;font-weight:800;font-size:13px}
+.badge b{display:block;font-size:21px;font-family:'Baloo 2'}
+.b-xp b{color:var(--yellow)} .b-acc b{color:var(--teal)} .b-combo b{color:var(--coral)}
+
+.confetti{position:fixed;top:-10px;font-size:20px;animation:fall linear forwards;z-index:99;pointer-events:none}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const say=(txt)=>{try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang='es-ES';u.rate=.88;speechSynthesis.speak(u);}catch(e){}};
+
+/* ============ TRILHA: 15 PARADAS · 3 MÓDULOS ============ */
+const TIERS=[
+ {name:"Módulo Básico",sub:"Nível A1–A2 · Sobrevivência",cls:"t0"},
+ {name:"Módulo Intermediário",sub:"Nível B1 · Gramática e fluência",cls:"t1"},
+ {name:"Módulo Avançado",sub:"Nível B2–C1 · Domínio do idioma",cls:"t2"}
+];
+
+const COURSE=[
+/* ---------- BÁSICO ---------- */
+{tier:0,city:"Cidade do México",emoji:"🌮",title:"Saludos",desc:"Cumprimentos essenciais",ex:[
+ {t:"mcq",p:"Como se diz «Olá» em espanhol?",a:"Hola",opts:["Hola","Ola","Alô","Buenos"],speak:"Hola"},
+ {t:"audio",word:"Buenos días",p:"O que você ouviu?",a:"Bom dia",opts:["Boa noite","Bom dia","Boa tarde","Até logo"]},
+ {t:"mcq",p:"«Buenas noches» significa…",a:"Boa noite",opts:["Boa tarde","Bom dia","Boa noite","Boas-vindas"],speak:"Buenas noches"},
+ {t:"pairs",p:"Ligue os pares",pairs:[["Hola","Olá"],["Adiós","Tchau"],["Gracias","Obrigado"],["Perdón","Desculpa"]]},
+ {t:"type",p:"Escreva em espanhol: «Obrigado»",a:"gracias",speak:"Gracias"},
+ {t:"audio",word:"¿Cómo estás?",p:"O que significa a frase?",a:"Como você está?",opts:["Quem é você?","Como você está?","Onde você está?","O que você quer?"]},
+]},
+{tier:0,city:"Bogotá",emoji:"☕",title:"Presentaciones",desc:"Se apresente em espanhol",ex:[
+ {t:"mcq",p:"«Me llamo Ana» significa…",a:"Meu nome é Ana",opts:["Eu chamo Ana","Meu nome é Ana","Eu ligo para Ana","Eu gosto da Ana"],speak:"Me llamo Ana"},
+ {t:"audio",word:"¿Cómo te llamas?",p:"O que perguntaram?",a:"Qual é o seu nome?",opts:["Quantos anos você tem?","De onde você é?","Qual é o seu nome?","Onde você mora?"]},
+ {t:"type",p:"Complete: «___ llamo Carlos» (me chamo Carlos)",a:"me",speak:"Me llamo Carlos"},
+ {t:"mcq",p:"«Soy de Brasil» significa…",a:"Sou do Brasil",opts:["Estou no Brasil","Sou do Brasil","Vou ao Brasil","Venho ao Brasil"],speak:"Soy de Brasil"},
+ {t:"pairs",p:"Ligue os pares",pairs:[["Yo","Eu"],["Tú","Você"],["Nosotros","Nós"],["Ellos","Eles"]]},
+ {t:"type",p:"Escreva em espanhol: «Muito prazer» (2 palavras)",a:"mucho gusto",speak:"Mucho gusto"},
+]},
+{tier:0,city:"Buenos Aires",emoji:"🥩",title:"Números y compras",desc:"Conte e negocie",ex:[
+ {t:"pairs",p:"Ligue os pares",pairs:[["Uno","1"],["Dos","2"],["Cinco","5"],["Diez","10"]]},
+ {t:"audio",word:"¿Cuánto cuesta?",p:"O que perguntaram na loja?",a:"Quanto custa?",opts:["Que horas são?","Quanto custa?","Onde fica?","Tem desconto?"]},
+ {t:"mcq",p:"«Es muy caro» significa…",a:"É muito caro",opts:["É muito bom","É muito caro","É muito raro","É muito claro"],speak:"Es muy caro"},
+ {t:"type",p:"Escreva em espanhol o número «sete»",a:"siete",speak:"Siete"},
+ {t:"mcq",p:"Como pedir a conta? «La ___, por favor»",a:"cuenta",opts:["conta","cuenta","factura","nota"],speak:"La cuenta, por favor"},
+ {t:"audio",word:"Quiero comprar esto",p:"O que a pessoa disse?",a:"Quero comprar isto",opts:["Quero ver isto","Quero comprar isto","Quero trocar isto","Quero pagar isto"]},
+]},
+{tier:0,city:"Madrid",emoji:"🥘",title:"En el restaurante",desc:"Peça comida como um local",ex:[
+ {t:"mcq",p:"«Tengo hambre» significa…",a:"Estou com fome",opts:["Tenho um homem","Estou com fome","Estou com sede","Tenho pressa"],speak:"Tengo hambre"},
+ {t:"pairs",p:"Ligue os pares",pairs:[["Pollo","Frango"],["Pescado","Peixe"],["Agua","Água"],["Postre","Sobremesa"]]},
+ {t:"audio",word:"Quisiera una mesa para dos",p:"O que o cliente pediu?",a:"Uma mesa para dois",opts:["Duas mesas","Uma mesa para dois","Um prato para dois","Dois cardápios"]},
+ {t:"type",p:"Escreva em espanhol: «água»",a:"agua",speak:"Agua"},
+ {t:"mcq",p:"Falso amigo! «Exquisito» significa…",a:"Delicioso",opts:["Esquisito","Delicioso","Exótico","Caro"],speak:"Exquisito"},
+ {t:"audio",word:"¡Buen provecho!",p:"O que desejaram a você?",a:"Bom apetite!",opts:["Boa sorte!","Bom apetite!","Bom trabalho!","Boa viagem!"]},
+]},
+{tier:0,city:"Havana",emoji:"🚕",title:"De viaje",desc:"Direções e transporte",ex:[
+ {t:"mcq",p:"«¿Dónde está el baño?» significa…",a:"Onde fica o banheiro?",opts:["Onde fica o banco?","Onde fica o banheiro?","Onde está o barco?","Cadê o banho?"],speak:"¿Dónde está el baño?"},
+ {t:"pairs",p:"Ligue os pares",pairs:[["Izquierda","Esquerda"],["Derecha","Direita"],["Cerca","Perto"],["Lejos","Longe"]]},
+ {t:"audio",word:"Siga todo recto",p:"Que direção indicaram?",a:"Siga em frente",opts:["Vire à direita","Siga em frente","Volte","Pare aqui"]},
+ {t:"type",p:"Escreva em espanhol: «esquerda»",a:"izquierda",speak:"Izquierda"},
+ {t:"mcq",p:"Falso amigo! «Oficina» em espanhol é…",a:"Escritório",opts:["Oficina mecânica","Escritório","Farmácia","Loja"],speak:"Oficina"},
+ {t:"audio",word:"El aeropuerto está lejos",p:"O que disseram sobre o aeroporto?",a:"Está longe",opts:["Está perto","Está longe","Está fechado","Está lotado"]},
+]},
+/* ---------- INTERMEDIÁRIO ---------- */
+{tier:1,city:"Lima",emoji:"🦙",title:"Ser vs Estar",desc:"O clássico que confunde todo mundo",ex:[
+ {t:"mcq",p:"«Ela é médica» (profissão) →",a:"Ella es médica",opts:["Ella está médica","Ella es médica","Ella era médica","Ella estar médica"],speak:"Ella es médica"},
+ {t:"mcq",p:"«Estou cansado» (estado temporário) →",a:"Estoy cansado",opts:["Soy cansado","Estoy cansado","Es cansado","Seré cansado"],speak:"Estoy cansado"},
+ {t:"type",p:"Complete: «La sopa ___ caliente» (estado agora)",a:"esta",hint:"Temperatura é temporária…",speak:"La sopa está caliente"},
+ {t:"pairs",p:"Ligue: uso de SER ou ESTAR",pairs:[["Profissão","Ser"],["Localização","Estar"],["Nacionalidade","Ser"],["Emoção","Estar"]]},
+ {t:"audio",word:"Estamos listos para salir",p:"O que disseram?",a:"Estamos prontos para sair",opts:["Somos rápidos para sair","Estamos prontos para sair","Estamos listados para sair","Vamos sair logo"]},
+ {t:"mcq",p:"Pegadinha! «Está rico» vs «Es rico»: qual fala de COMIDA gostosa?",a:"Está rico",opts:["Está rico","Es rico","Os dois","Nenhum"],speak:"¡Está rico!"},
+]},
+{tier:1,city:"Quito",emoji:"🌋",title:"Presente irregular",desc:"Tener, ir, querer, poder",ex:[
+ {t:"mcq",p:"«Eu tenho 25 anos» →",a:"Tengo 25 años",opts:["Teño 25 años","Tengo 25 años","Tiengo 25 años","Hay 25 años"],speak:"Tengo veinticinco años"},
+ {t:"type",p:"Conjugue: «Yo ___ al cine» (verbo IR)",a:"voy",speak:"Yo voy al cine"},
+ {t:"pairs",p:"Ligue verbo e conjugação (yo)",pairs:[["Querer","Quiero"],["Poder","Puedo"],["Hacer","Hago"],["Salir","Salgo"]]},
+ {t:"audio",word:"¿Puedes ayudarme?",p:"O que pediram?",a:"Você pode me ajudar?",opts:["Você quer me ajudar?","Você pode me ajudar?","Você vai me ajudar?","Você deve me ajudar?"]},
+ {t:"type",p:"Complete: «Ella ___ hablar tres idiomas» (poder)",a:"puede",speak:"Ella puede hablar tres idiomas"},
+ {t:"mcq",p:"«Quiero que vengas» — o verbo QUERER aqui expressa…",a:"Desejo",opts:["Obrigação","Desejo","Dúvida","Ordem"],speak:"Quiero que vengas"},
+]},
+{tier:1,city:"Santiago",emoji:"🍷",title:"Pretérito",desc:"Fale sobre o passado",ex:[
+ {t:"mcq",p:"«Ontem eu falei com ela» →",a:"Ayer hablé con ella",opts:["Ayer hablo con ella","Ayer hablé con ella","Ayer hablaré con ella","Ayer hablaba con ella"],speak:"Ayer hablé con ella"},
+ {t:"type",p:"Conjugue no passado: «Yo ___ paella» (comer)",a:"comi",hint:"Termina em -í",speak:"Yo comí paella"},
+ {t:"pairs",p:"Ligue: pretérito indefinido (yo)",pairs:[["Ir","Fui"],["Hacer","Hice"],["Tener","Tuve"],["Decir","Dije"]]},
+ {t:"audio",word:"Fuimos a la playa el domingo",p:"O que aconteceu?",a:"Fomos à praia no domingo",opts:["Vamos à praia no domingo","Fomos à praia no domingo","Fugimos da praia","Ficamos na praia"]},
+ {t:"mcq",p:"Indefinido ou imperfecto? «Cuando era niño, jugaba fútbol» usa imperfecto porque…",a:"É um hábito no passado",opts:["É uma ação única","É um hábito no passado","É futuro","É presente"],speak:"Cuando era niño, jugaba al fútbol"},
+ {t:"type",p:"Complete: «Anoche no ___ dormir» (poder, passado)",a:"pude",speak:"Anoche no pude dormir"},
+]},
+{tier:1,city:"Montevidéu",emoji:"🧉",title:"Futuro y planes",desc:"Planeje em espanhol",ex:[
+ {t:"mcq",p:"«Vou viajar amanhã» (futuro próximo) →",a:"Voy a viajar mañana",opts:["Iré viajar mañana","Voy a viajar mañana","Vaya viajar mañana","Fui a viajar mañana"],speak:"Voy a viajar mañana"},
+ {t:"type",p:"Futuro simples: «Yo ___ contigo» (hablar)",a:"hablare",hint:"hablar + é",speak:"Yo hablaré contigo"},
+ {t:"pairs",p:"Ligue: futuro irregular (yo)",pairs:[["Tener","Tendré"],["Hacer","Haré"],["Poder","Podré"],["Salir","Saldré"]]},
+ {t:"audio",word:"El año que viene aprenderé francés",p:"Qual é o plano?",a:"Aprender francês ano que vem",opts:["Aprender francês este ano","Aprender francês ano que vem","Ensinar francês","Viajar para a França"]},
+ {t:"mcq",p:"«Habrá una reunión» significa…",a:"Haverá uma reunião",opts:["Houve uma reunião","Haverá uma reunião","Há uma reunião","Abrirá uma reunião"],speak:"Habrá una reunión"},
+ {t:"type",p:"Complete: «Mañana ___ buen tiempo» (hacer, futuro)",a:"hara",speak:"Mañana hará buen tiempo"},
+]},
+{tier:1,city:"Cartagena",emoji:"🏖️",title:"Falsos amigos",desc:"As armadilhas do portunhol",ex:[
+ {t:"mcq",p:"«Embarazada» significa…",a:"Grávida",opts:["Envergonhada","Grávida","Embaraçada","Atrapalhada"],speak:"Embarazada"},
+ {t:"mcq",p:"«Vaso» em espanhol é…",a:"Copo",opts:["Vaso sanitário","Vaso de planta","Copo","Jarra"],speak:"Vaso"},
+ {t:"pairs",p:"Ligue o falso amigo ao real significado",pairs:[["Apellido","Sobrenome"],["Cachorro","Filhote"],["Salada","Salgada"],["Pelado","Careca"]]},
+ {t:"audio",word:"La comida está muy salada",p:"Qual é a reclamação?",a:"A comida está salgada demais",opts:["A comida é uma salada","A comida está salgada demais","A comida está gelada","A comida está estragada"]},
+ {t:"mcq",p:"Se um espanhol diz «tu hijo es muy largo», ele quis dizer que seu filho é…",a:"Comprido/alto",opts:["Largo","Comprido/alto","Gordo","Distante"],speak:"Tu hijo es muy largo"},
+ {t:"type",p:"Como se diz «sobrenome» em espanhol?",a:"apellido",speak:"Apellido"},
+]},
+/* ---------- AVANÇADO ---------- */
+{tier:2,city:"Barcelona",emoji:"🎨",title:"Subjuntivo I",desc:"Desejos, dúvidas e emoções",ex:[
+ {t:"mcq",p:"«Espero que tú ___ bien» →",a:"estés",opts:["estás","estés","estarás","estabas"],speak:"Espero que estés bien"},
+ {t:"type",p:"Complete: «Quiero que ___ conmigo» (venir, tú)",a:"vengas",speak:"Quiero que vengas conmigo"},
+ {t:"pairs",p:"Ligue: presente do subjuntivo (yo)",pairs:[["Ser","Sea"],["Ir","Vaya"],["Saber","Sepa"],["Haber","Haya"]]},
+ {t:"audio",word:"No creo que sea una buena idea",p:"O que a pessoa expressou?",a:"Dúvida de que seja boa ideia",opts:["Certeza de que é boa ideia","Dúvida de que seja boa ideia","Ordem para ter ideias","Pedido de uma ideia"]},
+ {t:"mcq",p:"Por que «Ojalá llueva» usa subjuntivo?",a:"Expressa um desejo",opts:["Expressa certeza","Expressa um desejo","É passado","É pergunta"],speak:"Ojalá llueva"},
+ {t:"type",p:"Complete: «Es importante que ___ la verdad» (decir, tú)",a:"digas",speak:"Es importante que digas la verdad"},
+]},
+{tier:2,city:"Sevilha",emoji:"💃",title:"Condicional",desc:"Hipóteses e cortesia",ex:[
+ {t:"mcq",p:"«Eu gostaria de um café» (cortesia) →",a:"Me gustaría un café",opts:["Me gusta un café","Me gustaría un café","Me gustará un café","Quiero café ya"],speak:"Me gustaría un café"},
+ {t:"type",p:"Complete: «Yo ___ más si tuviera tiempo» (viajar, condicional)",a:"viajaria",hint:"viajar + ía",speak:"Yo viajaría más si tuviera tiempo"},
+ {t:"audio",word:"Si fuera rico, compraría una casa en la playa",p:"Qual é a hipótese?",a:"Se fosse rico, compraria casa na praia",opts:["Ele é rico e comprou casa","Se fosse rico, compraria casa na praia","Ele vai comprar casa na praia","Ele quer ser rico"]},
+ {t:"pairs",p:"Ligue: condicional irregular (yo)",pairs:[["Tener","Tendría"],["Poder","Podría"],["Decir","Diría"],["Hacer","Haría"]]},
+ {t:"mcq",p:"«¿Podrías ayudarme?» é mais ___ que «¿Puedes ayudarme?»",a:"Educado/formal",opts:["Rude","Educado/formal","Antigo","Errado"],speak:"¿Podrías ayudarme?"},
+ {t:"type",p:"Complete a hipótese: «Si pudiera, te ___» (ayudar, condicional)",a:"ayudaria",speak:"Si pudiera, te ayudaría"},
+]},
+{tier:2,city:"Cidade do Panamá",emoji:"🌉",title:"Por vs Para",desc:"A dupla que derruba avançados",ex:[
+ {t:"mcq",p:"«Este regalo es ___ ti» (destinatário)",a:"para",opts:["por","para","a","de"],speak:"Este regalo es para ti"},
+ {t:"mcq",p:"«Gracias ___ tu ayuda» (motivo/causa)",a:"por",opts:["por","para","con","en"],speak:"Gracias por tu ayuda"},
+ {t:"pairs",p:"Ligue o uso à preposição",pairs:[["Destino/objetivo","Para"],["Causa/motivo","Por"],["Prazo final","Para"],["Duração","Por"]]},
+ {t:"audio",word:"Caminamos por el parque durante dos horas",p:"O que fizeram?",a:"Caminharam pelo parque por 2 horas",opts:["Foram para o parque às 2h","Caminharam pelo parque por 2 horas","Correram até o parque","Ficaram 2 dias no parque"]},
+ {t:"type",p:"Complete: «Estudio español ___ trabajar en España» (objetivo)",a:"para",speak:"Estudio español para trabajar en España"},
+ {t:"mcq",p:"«Lo hice por ti» vs «Lo hice para ti» — qual significa «fiz POR SUA CAUSA»?",a:"Lo hice por ti",opts:["Lo hice por ti","Lo hice para ti","Os dois","Nenhum"],speak:"Lo hice por ti"},
+]},
+{tier:2,city:"San Juan",emoji:"🎶",title:"Expresiones idiomáticas",desc:"Fale como nativo",ex:[
+ {t:"mcq",p:"«Estar en las nubes» significa…",a:"Estar distraído",opts:["Estar feliz","Estar distraído","Estar viajando","Estar com frio"],speak:"Estar en las nubes"},
+ {t:"audio",word:"No hay mal que por bien no venga",p:"Qual é o ditado equivalente?",a:"Há males que vêm para o bem",opts:["Não faça mal a ninguém","Há males que vêm para o bem","O mal sempre vence","Quem faz mal, recebe mal"]},
+ {t:"pairs",p:"Ligue expressão e significado",pairs:[["Costar un ojo","Ser caríssimo"],["Ser pan comido","Ser fácil"],["Meter la pata","Dar mancada"],["Tomar el pelo","Zoar alguém"]]},
+ {t:"mcq",p:"Se algo «es pan comido», a tarefa é…",a:"Muito fácil",opts:["Deliciosa","Muito fácil","Muito difícil","Cara"],speak:"Es pan comido"},
+ {t:"type",p:"Complete: «Me estás tomando el ___» (você está me zoando)",a:"pelo",speak:"Me estás tomando el pelo"},
+ {t:"audio",word:"Más vale tarde que nunca",p:"O que significa?",a:"Antes tarde do que nunca",opts:["Melhor cedo que tarde","Antes tarde do que nunca","Nunca chegue tarde","Tarde demais para tudo"]},
+]},
+{tier:2,city:"México DF — Final",emoji:"🏆",title:"Español profesional",desc:"Desafio final: negócios e formalidade",ex:[
+ {t:"mcq",p:"Abertura formal de e-mail:",a:"Estimado señor García:",opts:["¡Hola García!","Estimado señor García:","Oye, García","Querido Garcia"],speak:"Estimado señor García"},
+ {t:"audio",word:"Quedo a la espera de su respuesta",p:"Como termina o e-mail formal?",a:"Fico no aguardo da sua resposta",opts:["Responda urgente","Fico no aguardo da sua resposta","Não precisa responder","Espero você aqui"]},
+ {t:"type",p:"Complete: «Le agradezco ___ su atención» (causa)",a:"por",speak:"Le agradezco por su atención"},
+ {t:"pairs",p:"Ligue: vocabulário de negócios",pairs:[["Reunión","Reunião"],["Presupuesto","Orçamento"],["Plazo","Prazo"],["Acuerdo","Acordo"]]},
+ {t:"mcq",p:"«Cerramos el trato» significa…",a:"Fechamos o negócio",opts:["Cancelamos o trato","Fechamos o negócio","Encerramos a loja","Assinamos depois"],speak:"Cerramos el trato"},
+ {t:"audio",word:"Propongo que agendemos una reunión para el jueves",p:"Qual foi a proposta? (repare no subjuntivo!)",a:"Agendar reunião na quinta",opts:["Cancelar a reunião de quinta","Agendar reunião na quinta","Adiar para sexta","Fazer reunião agora"]},
+]}
+];
+
+/* ============ ESTADO ============ */
+let S={xp:0,streak:0,hearts:5,unlocked:0,stars:Array(COURSE.length).fill(0)};
+let L=null;
+const app=document.getElementById('app');
+const norm=s=>s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[¿?¡!.]/g,'');
+const XP_TIER=[10,15,20]; // XP por acerto conforme módulo
+
+/* ============ MAPA ============ */
+function renderMap(){
+  speechSynthesis.cancel();
+  let html='',lastTier=-1,alt=false;
+  COURSE.forEach((lv,i)=>{
+    if(lv.tier!==lastTier){
+      lastTier=lv.tier;
+      const t=TIERS[lv.tier];
+      html+=`<div class="tier ${t.cls}"><div class="line"></div><div><h2>${t.name}</h2><div class="sub">${t.sub}</div></div><div class="line"></div></div>`;
+    }
+    const state=i<S.unlocked?'done':i===S.unlocked?'current':'locked';
+    const stars='★'.repeat(S.stars[i])+'☆'.repeat(3-S.stars[i]);
+    html+=`<div class="node ${state} ${alt?'alt':''}">
+      <button class="node-btn" ${state==='locked'?'disabled':''} onclick="startLesson(${i})" aria-label="Parada ${i+1}: ${lv.title}">${state==='locked'?'🔒':lv.emoji}</button>
+      <div class="node-info">
+        <div class="city">Parada ${i+1} · ${lv.city}</div>
+        <h3>${lv.title}</h3>
+        <div class="desc">${lv.desc}</div>
+        <div class="stars">${i<S.unlocked?stars:''}</div>
+      </div>
+    </div>`;
+    alt=!alt;
+  });
+  const done=COURSE.filter((_,i)=>i<S.unlocked).length;
+  app.innerHTML=`${hud()}
+    <div class="map-header">
+      <h1>🌎 Ruta del Español</h1>
+      <p>15 paradas do básico ao avançado, por toda a América Latina e Espanha. Ative o som 🔊 — os exercícios falam espanhol com você.</p>
+      <span class="level-tag">${done}/15 paradas · ${done<5?'Nível Básico':done<10?'Nível Intermediário':done<15?'Nível Avançado':'Curso completo! 🎓'}</span>
+    </div>
+    <div class="trail">${html}</div>`;
+}
+function hud(){
+  return `<div class="hud">
+    <span class="stat xp">⚡ ${S.xp} XP</span>
+    <span class="stat streak">🔥 ${S.streak}</span>
+    <span class="stat hearts">${'❤️'.repeat(S.hearts)}${'🖤'.repeat(5-S.hearts)}</span>
+  </div>`;
+}
+
+/* ============ LIÇÃO ============ */
+function startLesson(i){
+  S.hearts=5;
+  L={lvl:i,idx:0,correct:0,combo:0,maxCombo:0,xpGain:0,answered:false};
+  renderQ();
+}
+function xpGain(){const base=XP_TIER[COURSE[L.lvl].tier];return base+(L.combo>=3?5:0);}
+function renderQ(){
+  const lv=COURSE[L.lvl],ex=lv.ex[L.idx],pct=(L.idx/lv.ex.length)*100;
+  let body='';
+  if(ex.t==='mcq'||ex.t==='audio'){
+    const opts=[...ex.opts].sort(()=>Math.random()-.5);
+    body=`${ex.t==='audio'?`<button class="audio-btn" onclick="say('${ex.word.replace(/'/g,"\\'")}')" aria-label="Ouvir áudio">🔊</button>`:''}
+    <div class="options">${opts.map(o=>`<button class="opt" onclick="answerMCQ(this,'${o.replace(/'/g,"\\'")}')">${o}</button>`).join('')}</div>`;
+    if(ex.t==='audio')setTimeout(()=>say(ex.word),400);
+  } else if(ex.t==='type'){
+    body=`<input class="type-input" id="tin" autocomplete="off" placeholder="Digite em espanhol… (acentos opcionais)" onkeydown="if(event.key==='Enter')checkType()">`;
+  } else if(ex.t==='pairs'){
+    const items=[];
+    ex.pairs.forEach((p,pi)=>{items.push({txt:p[0],k:pi,es:true});items.push({txt:p[1],k:pi,es:false});});
+    items.sort(()=>Math.random()-.5);
+    L.pairsLeft=ex.pairs.length;L.sel=null;
+    body=`<div class="pairs">${items.map(it=>`<button class="pair-btn" data-k="${it.k}" data-es="${it.es}" onclick="pickPair(this)">${it.txt}</button>`).join('')}</div>`;
+  }
+  app.innerHTML=`${hud()}
+  <div class="lesson">
+    <div class="progressbar"><div style="width:${pct}%"></div></div>
+    <div class="combo">${L.combo>=2?`🔥 Combo x${L.combo}!`:''}</div>
+    <div class="q-card">
+      <div class="q-type">${lv.emoji} ${lv.city} · ${L.idx+1}/${lv.ex.length} · ${{mcq:'Tradução',audio:'Escuta',type:'Escrita',pairs:'Pares'}[ex.t]}</div>
+      <div class="q-prompt">${ex.p}</div>
+      ${ex.hint?`<div class="q-hint">💡 ${ex.hint}</div>`:''}
+      ${body}
+      <div class="feedback" id="fb"></div>
+    </div>
+    <div class="cta">
+      ${ex.t==='type'?`<button class="btn-main" onclick="checkType()">Verificar</button>`:
+        `<button class="btn-main" id="next" onclick="nextQ()" disabled>Continuar</button>`}
+      <button class="btn-ghost" onclick="renderMap()">← Sair da lição</button>
+    </div>
+  </div>`;
+}
+function feedback(ok,msg){
+  const fb=document.getElementById('fb');
+  fb.className='feedback '+(ok?'ok':'err');
+  fb.textContent=msg;
+}
+function score(ok){
+  if(ok){L.correct++;L.combo++;L.maxCombo=Math.max(L.maxCombo,L.combo);
+    const g=xpGain();L.xpGain+=g;S.xp+=g;
+  } else {L.combo=0;S.hearts=Math.max(0,S.hearts-1);}
+  document.querySelector('.hud').outerHTML=hud();
+}
+function answerMCQ(btn,val){
+  if(L.answered)return;L.answered=true;
+  const ex=COURSE[L.lvl].ex[L.idx];
+  const ok=val===ex.a;
+  document.querySelectorAll('.opt').forEach(b=>{
+    if(b.textContent===ex.a)b.classList.add('correct');
+    else if(b===btn&&!ok)b.classList.add('wrong');
+    b.disabled=true;
+  });
+  if(ex.speak)say(ex.speak);
+  score(ok);
+  feedback(ok,ok?'¡Muy bien! +'+xpGain()+' XP':'Ops! A resposta era: '+ex.a);
+  document.getElementById('next').disabled=false;
+  if(S.hearts===0)return gameOver();
+}
+function checkType(){
+  if(L.answered)return;
+  const ex=COURSE[L.lvl].ex[L.idx];
+  const v=document.getElementById('tin').value;
+  if(!v.trim())return;
+  L.answered=true;
+  const ok=norm(v)===norm(ex.a);
+  if(ex.speak)say(ex.speak);
+  score(ok);
+  feedback(ok,ok?'¡Perfecto! +'+xpGain()+' XP':'Quase! O correto é: '+ex.a);
+  document.querySelector('.cta .btn-main').outerHTML=`<button class="btn-main" onclick="nextQ()">Continuar</button>`;
+  if(S.hearts===0)return gameOver();
+}
+function pickPair(btn){
+  if(btn.classList.contains('matched'))return;
+  if(btn.dataset.es==='true')say(btn.textContent);
+  if(!L.sel){L.sel=btn;btn.classList.add('sel');return;}
+  if(L.sel===btn){btn.classList.remove('sel');L.sel=null;return;}
+  const a=L.sel,b=btn;
+  a.classList.remove('sel');
+  if(a.dataset.k===b.dataset.k&&a.dataset.es!==b.dataset.es){
+    a.classList.add('matched');b.classList.add('matched');
+    L.pairsLeft--;
+    if(L.pairsLeft===0){
+      score(true);
+      feedback(true,'¡Excelente! Todos os pares! +'+xpGain()+' XP');
+      document.getElementById('next').disabled=false;
+    }
+  } else {
+    a.classList.add('shake');b.classList.add('shake');
+    setTimeout(()=>{a.classList.remove('shake');b.classList.remove('shake');},350);
+    score(false);
+    if(S.hearts===0)return gameOver();
+  }
+  L.sel=null;
+}
+function nextQ(){
+  L.idx++;L.answered=false;
+  if(L.idx>=COURSE[L.lvl].ex.length)return finishLesson();
+  renderQ();
+}
+
+/* ============ RESULTADOS ============ */
+function finishLesson(){
+  const lv=COURSE[L.lvl],total=lv.ex.length,acc=Math.round(L.correct/total*100);
+  const stars=acc===100?3:acc>=70?2:1;
+  S.stars[L.lvl]=Math.max(S.stars[L.lvl],stars);
+  if(L.lvl===S.unlocked)S.unlocked++;
+  S.streak++;
+  confetti();
+  const courseDone=S.unlocked>=COURSE.length;
+  const tierDone=(L.lvl===4||L.lvl===9)&&L.lvl<S.unlocked;
+  app.innerHTML=`${hud()}
+  <div class="result">
+    <div class="big">${courseDone?'🏆':'⭐'.repeat(stars)}</div>
+    <h2>${courseDone?'¡Felicidades, hispanohablante!':tierDone?'Módulo concluído! 🎖️':'¡Parada concluída!'}</h2>
+    <p>${courseDone?'Você completou toda a Ruta — do «hola» ao subjuntivo. 🎓':tierDone?'Você subiu de nível! O próximo módulo te espera.':lv.city+' agora é sua. Próxima parada desbloqueada!'}</p>
+    <div class="badges">
+      <div class="badge b-xp"><b>+${L.xpGain}</b>XP ganho</div>
+      <div class="badge b-acc"><b>${acc}%</b>Precisão</div>
+      <div class="badge b-combo"><b>x${L.maxCombo}</b>Maior combo</div>
+    </div>
+    <div style="width:100%;max-width:320px">
+      <button class="btn-main" onclick="renderMap()">Voltar ao mapa</button>
+      <button class="btn-ghost" onclick="startLesson(${L.lvl})">Repetir para 3 estrelas</button>
+    </div>
+  </div>`;
+  say(courseDone?'¡Felicidades! Has completado todo el curso. Eres increíble.':'¡Muy bien hecho!');
+}
+function gameOver(){
+  app.innerHTML=`${hud()}
+  <div class="result">
+    <div class="big">💔</div>
+    <h2>Acabaram os corações!</h2>
+    <p>Sem problema — errar faz parte do aprendizado. Respire e tente de novo.</p>
+    <div style="width:100%;max-width:320px;margin-top:20px">
+      <button class="btn-main" onclick="startLesson(${L.lvl})">Tentar novamente</button>
+      <button class="btn-ghost" onclick="renderMap()">Voltar ao mapa</button>
+    </div>
+  </div>`;
+}
+function confetti(){
+  const em=['🎉','⭐','🌮','🎊','💛','🏆'];
+  for(let i=0;i<28;i++){
+    const c=document.createElement('div');
+    c.className='confetti';c.textContent=em[i%em.length];
+    c.style.left=Math.random()*100+'vw';
+    c.style.animationDuration=(2+Math.random()*2)+'s';
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),4200);
+  }
+}
+renderMap();
+</script>
+</body>
+</html>
